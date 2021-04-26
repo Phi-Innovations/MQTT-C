@@ -5,7 +5,7 @@ project(MQTT-C VERSION 1.1.2 LANGUAGES C)
 option(MQTT_C_OpenSSL_SUPPORT "Build MQTT-C with OpenSSL support?" OFF)
 option(MQTT_C_MbedTLS_SUPPORT "Build MQTT-C with mbed TLS support?" OFF)
 option(MQTT_C_BearSSL_SUPPORT "Build MQTT-C with Bear SSL support?" OFF)
-option(MQTT_C_EXAMPLES "Build MQTT-C examples?" ON)
+option(MQTT_C_EXAMPLES "Build MQTT-C examples?" OFF)
 option(MQTT_C_TESTS "Build MQTT-C tests?" OFF)
 
 list (APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -54,9 +54,9 @@ endif()
 
 # Configure with mbed TLS support
 if(MQTT_C_MbedTLS_SUPPORT)
-    find_package(MbedTLS REQUIRED)
-    target_include_directories(mqttc PUBLIC ${MBEDTLS_INCLUDE_DIRS})
-    target_link_libraries(mqttc INTERFACE ${MBEDTLS_LIBRARY})
+    # find_package(MbedTLS REQUIRED)
+    # target_include_directories(mqttc PUBLIC ${MBEDTLS_INCLUDE_DIRS})
+    # target_link_libraries(mqttc INTERFACE ${MBEDTLS_LIBRARY})
     target_compile_definitions(mqttc PUBLIC MQTT_USE_MBEDTLS)
 endif()
 
