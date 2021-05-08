@@ -3,7 +3,7 @@ project(MQTT-C VERSION 1.1.2 LANGUAGES C)
 
 # MQTT-C build options
 option(MQTT_C_OpenSSL_SUPPORT "Build MQTT-C with OpenSSL support?" OFF)
-option(MQTT_C_MbedTLS_SUPPORT "Build MQTT-C with mbed TLS support?" OFF)
+option(MQTT_C_MbedTLS_SUPPORT "Build MQTT-C with mbed TLS support?" ON)
 option(MQTT_C_BearSSL_SUPPORT "Build MQTT-C with Bear SSL support?" OFF)
 option(MQTT_C_EXAMPLES "Build MQTT-C examples?" OFF)
 option(MQTT_C_TESTS "Build MQTT-C tests?" OFF)
