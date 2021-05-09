@@ -103,6 +103,7 @@ uint16_t __mqtt_next_pid(struct mqtt_client *client) {
 }
 
 enum MQTTErrors mqtt_init(struct mqtt_client *client,
+               mqtt_pal_ssl_handle ctx,
                mqtt_pal_socket_handle sockfd,
                uint8_t *sendbuf, size_t sendbufsz,
                uint8_t *recvbuf, size_t recvbufsz,
@@ -116,7 +117,14 @@ enum MQTTErrors mqtt_init(struct mqtt_client *client,
     MQTT_PAL_MUTEX_INIT(&client->mutex);
     MQTT_PAL_MUTEX_LOCK(&client->mutex); /* unlocked during CONNECT */
 
-    client->socketfd = sockfd;
+    if (ctx != NULL) {
+        client->useTls = true;
+        client->sslCtx = ctx;
+    }
+    else {
+        client->useTls = false;
+        client->socketfd = sockfd;
+    }
 
     mqtt_mq_init(&client->mq, sendbuf, sendbufsz);
 
@@ -149,7 +157,12 @@ void mqtt_init_reconnect(struct mqtt_client *client,
     /* initialize mutex */
     MQTT_PAL_MUTEX_INIT(&client->mutex);
 
-    client->socketfd = (mqtt_pal_socket_handle) -1;
+    if (client->useTls) {
+        client->sslCtx = NULL;
+    }
+    else {
+        client->socketfd = (mqtt_pal_socket_handle)-1;
+    }
 
     mqtt_mq_init(&client->mq, NULL, 0);
 
@@ -172,12 +185,20 @@ void mqtt_init_reconnect(struct mqtt_client *client,
 }
 
 void mqtt_reinit(struct mqtt_client* client,
+                 mqtt_pal_ssl_handle ctx,
                  mqtt_pal_socket_handle socketfd,
                  uint8_t *sendbuf, size_t sendbufsz,
                  uint8_t *recvbuf, size_t recvbufsz)
 {
     client->error = MQTT_ERROR_CONNECT_NOT_CALLED;
-    client->socketfd = socketfd;
+    if (ctx != NULL) {
+        client->useTls = true;
+        client->sslCtx = ctx;
+    }
+    else {
+        client->useTls = false;
+        client->socketfd = socketfd;
+    }
 
     mqtt_mq_init(&client->mq, sendbuf, sendbufsz);
 
@@ -546,7 +567,13 @@ ssize_t __mqtt_send(struct mqtt_client *client)
 
         /* we're sending the message */
         {
-          ssize_t tmp = mqtt_pal_sendall(client->socketfd, msg->start + client->send_offset, msg->size - client->send_offset, 0);
+          ssize_t tmp;
+          if (client->useTls) {
+            tmp = mqtt_pal_sendall_ssl(client->sslCtx, msg->start + client->send_offset, msg->size - client->send_offset, 0);
+          }
+          else {
+            tmp = mqtt_pal_sendall(client->socketfd, msg->start + client->send_offset, msg->size - client->send_offset, 0);
+          }
           if (tmp < 0) {
             client->error = tmp;
             MQTT_PAL_MUTEX_UNLOCK(&client->mutex);
@@ -649,7 +676,12 @@ ssize_t __mqtt_recv(struct mqtt_client *client)
         ssize_t rv, consumed;
         struct mqtt_queued_message *msg = NULL;
 
-        rv = mqtt_pal_recvall(client->socketfd, client->recv_buffer.curr, client->recv_buffer.curr_sz, 0);
+        if (client->useTls) {
+            rv = mqtt_pal_recvall_ssl(client->sslCtx, client->recv_buffer.curr, client->recv_buffer.curr_sz, 0);
+        }
+        else {
+            rv = mqtt_pal_recvall(client->socketfd, client->recv_buffer.curr, client->recv_buffer.curr_sz, 0);
+        }
         if (rv < 0) {
             /* an error occurred */
             client->error = rv;

@@ -35,7 +35,7 @@ SOFTWARE.
 #ifdef MQTT_USE_MBEDTLS
 #include <mbedtls/ssl.h>
 
-ssize_t mqtt_pal_sendall(mqtt_pal_socket_handle fd, const void* buf, size_t len, int flags) {
+ssize_t mqtt_pal_sendall_ssl(mqtt_pal_ssl_handle fd, const void* buf, size_t len, int flags) {
     size_t sent = 0;
     while(sent < len) {
         int rv = mbedtls_ssl_write(fd, buf + sent, len - sent);
@@ -59,7 +59,7 @@ ssize_t mqtt_pal_sendall(mqtt_pal_socket_handle fd, const void* buf, size_t len,
     return sent;
 }
 
-ssize_t mqtt_pal_recvall(mqtt_pal_socket_handle fd, void* buf, size_t bufsz, int flags) {
+ssize_t mqtt_pal_recvall_ssl(mqtt_pal_ssl_handle fd, void* buf, size_t bufsz, int flags) {
     const void *const start = buf;
     int rv;
     do {
@@ -304,7 +304,9 @@ ssize_t mqtt_pal_recvall(mqtt_pal_socket_handle fd, void* buf, size_t bufsz, int
     return (ssize_t)(bufptr - start);
 }
 
-#elif defined(__unix__) || defined(__APPLE__) || defined(__NuttX__)
+#endif
+
+#if defined(__unix__) || defined(__APPLE__) || defined(__NuttX__)
 
 #include <errno.h>
 

@@ -1091,6 +1091,12 @@ struct mqtt_queued_message* mqtt_mq_find(struct mqtt_message_queue *mq, enum MQT
  * @note All members can be manipulated via the related functions.
  */
 struct mqtt_client {
+    /** @brief Flag indicating the use of TLS in the communication */
+    bool useTls;
+
+    /** @brief The SSL context connecting to the MQTT broker. */
+    mqtt_pal_ssl_handle sslCtx;
+
     /** @brief The socket connecting to the MQTT broker. */
     mqtt_pal_socket_handle socketfd;
 
@@ -1304,8 +1310,8 @@ enum MQTTErrors mqtt_sync(struct mqtt_client *client);
  * @pre None.
  * 
  * @param[out] client The MQTT client.
- * @param[in] sockfd The socket file descriptor (or equivalent socket handle, e.g. BIO pointer 
- *            for OpenSSL sockets) connected to the MQTT broker.
+ * @param[in] ctx SSL context structure for SSL communication connected to the MQTT broker
+ * @param[in] socketfd The socket file descriptor connected to the MQTT broker.
  * @param[in] sendbuf A buffer that will be used for sending messages to the broker.
  * @param[in] sendbufsz The size of \p sendbuf in bytes.
  * @param[in] recvbuf A buffer that will be used for receiving messages from the broker.
@@ -1322,6 +1328,7 @@ enum MQTTErrors mqtt_sync(struct mqtt_client *client);
  * @note A pointer to \ref mqtt_client.publish_response_callback_state is always passed as the 
  *       \c state argument to \p publish_response_callback. Note that the second argument is 
  *       the mqtt_response_publish that was received from the broker.
+ * @note If ctx is not NULL, SSL communication will have preference
  * 
  * @attention Only initialize an MQTT client once (i.e. don't call \ref mqtt_init or 
  *            \ref mqtt_init_reconnect more than once per client).
@@ -1345,7 +1352,8 @@ enum MQTTErrors mqtt_sync(struct mqtt_client *client);
  * @returns \c MQTT_OK upon success, an \ref MQTTErrors otherwise.
  */
 enum MQTTErrors mqtt_init(struct mqtt_client *client,
-                          mqtt_pal_socket_handle sockfd,
+                          mqtt_pal_ssl_handle ctx,
+                          mqtt_pal_socket_handle socketfd,
                           uint8_t *sendbuf, size_t sendbufsz,
                           uint8_t *recvbuf, size_t recvbufsz,
                           void (*publish_response_callback)(void** state, struct mqtt_response_publish *publish));
@@ -1410,6 +1418,7 @@ void mqtt_init_reconnect(struct mqtt_client *client,
  * @pre This function must be called BEFORE \ref mqtt_connect. 
  * 
  * @param[in,out] client The MQTT client.
+ * @param[in] ctx The new SSL context structure connected to the broker
  * @param[in] socketfd The new socket connected to the broker. 
  * @param[in] sendbuf The buffer that will be used to buffer egress traffic to the broker.
  * @param[in] sendbufsz The size of \p sendbuf in bytes.
@@ -1422,6 +1431,7 @@ void mqtt_init_reconnect(struct mqtt_client *client,
  *            initialzed with \ref mqtt_init_reconnect.  
  */
 void mqtt_reinit(struct mqtt_client* client,
+                 mqtt_pal_ssl_handle ctx,
                  mqtt_pal_socket_handle socketfd,
                  uint8_t *sendbuf, size_t sendbufsz,
                  uint8_t *recvbuf, size_t recvbufsz);

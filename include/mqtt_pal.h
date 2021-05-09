@@ -76,6 +76,7 @@ extern "C" {
     #include <time.h>
     #include <arpa/inet.h>
     #include <pthread.h>
+    #include <stdbool.h>
 
     #define MQTT_PAL_HTONS(s) htons(s)
     #define MQTT_PAL_NTOHS(s) ntohs(s)
@@ -92,7 +93,7 @@ extern "C" {
     #ifndef MQTT_USE_CUSTOM_SOCKET_HANDLE
         #ifdef MQTT_USE_MBEDTLS
             struct mbedtls_ssl_context;
-            typedef struct mbedtls_ssl_context *mqtt_pal_socket_handle;
+            typedef struct mbedtls_ssl_context *mqtt_pal_ssl_handle;
         #elif defined(MQTT_USE_WOLFSSL)
             #include <wolfssl/ssl.h>
             typedef WOLFSSL* mqtt_pal_socket_handle;
@@ -114,9 +115,8 @@ extern "C" {
             } bearssl_context;
 
             typedef bearssl_context* mqtt_pal_socket_handle;
-        #else
-            typedef int mqtt_pal_socket_handle;
         #endif
+        typedef int mqtt_pal_socket_handle;
     #endif
 #elif defined(_MSC_VER)
     #include <limits.h>
@@ -151,7 +151,33 @@ extern "C" {
 #endif
 
 /**
- * @brief Sends all the bytes in a buffer.
+ * @brief Sends all the bytes in a buffer using SSL
+ * @ingroup pal
+ * 
+ * @param[in] fd The file-descriptor (or handle) of the socket.
+ * @param[in] buf A pointer to the first byte in the buffer to send.
+ * @param[in] len The number of bytes to send (starting at \p buf).
+ * @param[in] flags Flags which are passed to the underlying socket.
+ * 
+ * @returns The number of bytes sent if successful, an \ref MQTTErrors otherwise.
+ */
+ssize_t mqtt_pal_sendall_ssl(mqtt_pal_ssl_handle fd, const void* buf, size_t len, int flags);
+
+/**
+ * @brief Non-blocking receive all the byte available using SSL
+ * @ingroup pal
+ * 
+ * @param[in] fd The file-descriptor (or handle) of the socket.
+ * @param[in] buf A pointer to the receive buffer.
+ * @param[in] bufsz The max number of bytes that can be put into \p buf.
+ * @param[in] flags Flags which are passed to the underlying socket.
+ * 
+ * @returns The number of bytes received if successful, an \ref MQTTErrors otherwise.
+ */
+ssize_t mqtt_pal_recvall_ssl(mqtt_pal_ssl_handle fd, void* buf, size_t bufsz, int flags);
+
+/**
+ * @brief Sends all the bytes in a buffer
  * @ingroup pal
  * 
  * @param[in] fd The file-descriptor (or handle) of the socket.
@@ -164,7 +190,7 @@ extern "C" {
 ssize_t mqtt_pal_sendall(mqtt_pal_socket_handle fd, const void* buf, size_t len, int flags);
 
 /**
- * @brief Non-blocking receive all the byte available.
+ * @brief Non-blocking receive all the byte available
  * @ingroup pal
  * 
  * @param[in] fd The file-descriptor (or handle) of the socket.
