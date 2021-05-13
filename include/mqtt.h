@@ -1318,6 +1318,8 @@ enum MQTTErrors mqtt_sync(struct mqtt_client *client);
  * @param[in] recvbufsz The size of \p recvbuf in bytes.
  * @param[in] publish_response_callback The callback to call whenever application messages
  *            are received from the broker. 
+ * @param[in] publish_reponse_state A pointer to some data to be used when a new message
+ *            is received
  * 
  * @post mqtt_connect must be called.
  * 
@@ -1356,7 +1358,8 @@ enum MQTTErrors mqtt_init(struct mqtt_client *client,
                           mqtt_pal_socket_handle socketfd,
                           uint8_t *sendbuf, size_t sendbufsz,
                           uint8_t *recvbuf, size_t recvbufsz,
-                          void (*publish_response_callback)(void** state, struct mqtt_response_publish *publish));
+                          void (*publish_response_callback)(void** state, struct mqtt_response_publish *publish),
+                          void *publish_response_state);
 
 /**
  * @brief Initializes an MQTT client and enables automatic reconnections.
@@ -1394,6 +1397,8 @@ enum MQTTErrors mqtt_init(struct mqtt_client *client,
  *            pointer is passed as the second argumnet to \p reconnect_callback. 
  * @param[in] publish_response_callback The callback to call whenever application messages
  *            are received from the broker. 
+ * @param[in] publish_reponse_state A pointer to some data to be used when a new message
+ *            is received
  * 
  * @post Call \p reconnect_callback yourself, or call \ref mqtt_sync 
  *       (which will trigger the call to \p reconnect_callback).
@@ -1405,7 +1410,8 @@ enum MQTTErrors mqtt_init(struct mqtt_client *client,
 void mqtt_init_reconnect(struct mqtt_client *client,
                          void (*reconnect_callback)(struct mqtt_client *client, void** state),
                          void *reconnect_state,
-                         void (*publish_response_callback)(void** state, struct mqtt_response_publish *publish));
+                         void (*publish_response_callback)(void** state, struct mqtt_response_publish *publish),
+                         void *publish_response_state);
 
 /**
  * @brief Safely assign/reassign a socket and buffers to an new/existing client.

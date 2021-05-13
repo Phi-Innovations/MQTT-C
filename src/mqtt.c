@@ -107,7 +107,8 @@ enum MQTTErrors mqtt_init(struct mqtt_client *client,
                mqtt_pal_socket_handle sockfd,
                uint8_t *sendbuf, size_t sendbufsz,
                uint8_t *recvbuf, size_t recvbufsz,
-               void (*publish_response_callback)(void** state,struct mqtt_response_publish *publish))
+               void (*publish_response_callback)(void** state,struct mqtt_response_publish *publish),
+               void *publish_response_state)
 {
     if (client == NULL || sendbuf == NULL || recvbuf == NULL) {
         return MQTT_ERROR_NULLPTR;
@@ -139,6 +140,7 @@ enum MQTTErrors mqtt_init(struct mqtt_client *client,
     client->number_of_keep_alives = 0;
     client->typical_response_time = -1.0;
     client->publish_response_callback = publish_response_callback;
+    client->publish_response_callback_state = publish_response_state;
     client->pid_lfsr = 0;
     client->send_offset = 0;
 
@@ -152,7 +154,8 @@ enum MQTTErrors mqtt_init(struct mqtt_client *client,
 void mqtt_init_reconnect(struct mqtt_client *client,
                          void (*reconnect)(struct mqtt_client *, void**),
                          void *reconnect_state,
-                         void (*publish_response_callback)(void** state, struct mqtt_response_publish *publish))
+                         void (*publish_response_callback)(void** state, struct mqtt_response_publish *publish),
+                         void *publish_response_state)
 {
     /* initialize mutex */
     MQTT_PAL_MUTEX_INIT(&client->mutex);
@@ -177,6 +180,7 @@ void mqtt_init_reconnect(struct mqtt_client *client,
     client->number_of_keep_alives = 0;
     client->typical_response_time = -1.0;
     client->publish_response_callback = publish_response_callback;
+    client->publish_response_callback_state = publish_response_state;
     client->send_offset = 0;
 
     client->inspector_callback = NULL;
